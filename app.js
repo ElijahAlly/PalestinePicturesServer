@@ -35,25 +35,49 @@ mongoose.Promise = require('bluebird');
 const url = config.mongoURI;
 const uploadDb = config.uploadDb;
 
-console.time('Connected to MongoDB: PalestinePictures in');
-
-
-const adminURI = `${url}/email`;
-const palistineFilesURI = `${url}/palestine_files`;
-const testURI = `${url}/test`;
-
-const connectToDatabase = (dbURI) => {
-    mongoose.connect(dbURI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    })
-    .then(() => console.log(`Connected to ${dbURI}`))
-    .catch(err => console.error(`Connection error to ${dbURI}:`, err));
+// Individual database URIs
+const dbURIs = {
+    admin: `${url}/admin`,
+    palestine_files: `${url}/palestine_files`,
+    test: `${url}/test`,
 };
 
-connectToDatabase(adminURI);
-connectToDatabase(palistineFilesURI);
-connectToDatabase(testURI);
+// Create connections
+const connections = {};
+
+const connectToDatabase = async (dbName) => {
+    try {
+        const dbURI = dbURIs[dbName];
+        // Create a new connection
+        const connection = mongoose.createConnection(dbURI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000,
+        });
+
+        // Store the connection in the connections object
+        connections[dbName] = connection;
+
+        // Optionally listen to connection events
+        connection.on('connected', () => {
+            console.log(`Connected to ${dbName} database`);
+        });
+
+        connection.on('error', (err) => {
+            console.error(`Connection error to ${dbName} database:`, err);
+        });
+
+        // Use the connection
+        return connection;
+    } catch (error) {
+        console.error(`Failed to connect to ${dbName} database:`, error);
+    }
+};
+
+// Connect to each database
+connectToDatabase('admin');
+connectToDatabase('palestine_files');
+connectToDatabase('test');
 
 /* 
     GridFs Configuration
