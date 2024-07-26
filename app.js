@@ -37,27 +37,23 @@ const uploadDb = config.uploadDb;
 
 console.time('Connected to MongoDB: PalestinePictures in');
 
-console.log('url -> ', url);
-const connect = mongoose.connect(url, { 
-    useNewUrlParser: true, 
-    useUnifiedTopology: true,
-//     serverSelectionTimeoutMS: 10000, // Wait 90 seconds before throwing a connection error.
-});
 
-// connect to the database
-connect.then(() => {
-    console.log('\n********************* ***************** *************');
-    console.log('SUCCESS')
-    console.timeEnd('Connected to MongoDB: PalestinePictures in');
-    console.log('********************* ***************** *************\n');
-});
+const adminURI = `${url}/email`;
+const palistineFilesURI = `${url}/palestine_files`;
+const testURI = `${url}/test`;
 
-connect.catch((err) => {
-    console.log('FAILED')
-    console.log('COULD NOT CONNECT TO PALESTINE PICTURES MongoDB :/'); 
-    console.timeEnd('Connected to MongoDB: PalestinePictures in'); 
-    console.log('\n', err) 
-});
+const connectToDatabase = (dbURI) => {
+    mongoose.connect(dbURI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    })
+    .then(() => console.log(`Connected to ${dbURI}`))
+    .catch(err => console.error(`Connection error to ${dbURI}:`, err));
+};
+
+connectToDatabase(adminURI);
+connectToDatabase(palistineFilesURI);
+connectToDatabase(testURI);
 
 /* 
     GridFs Configuration
