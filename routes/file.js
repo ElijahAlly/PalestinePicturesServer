@@ -175,10 +175,12 @@ module.exports = (upload) => {
                     });
                 }
 
-                if (file.contentType === 'image/jpg' 
+                if (file.contentType === 'image/jpg'
                     || file.contentType === 'image/jpeg' 
                     || file.contentType === 'image/png' 
                     || file.contentType === 'image/svg+xml'
+                    || file.contentType === 'image/gif'
+                    || file.contentType === 'video/mp4'
                 ) {
                     gfs.openDownloadStreamByName(req.params.filename).pipe(res);
                 } else {

@@ -88,9 +88,6 @@ const storage = new GridFsStorage({
     url: config.mongoURIWithDB(uploadDb),
     file: (req, file) => {
         return new Promise((resolve, reject) => {
-            console.log('in storage file -> ', file);
-            console.log('in storage path -> ', file.path);
-            console.log('in storage buffer -> ', file.buffer);
             crypto.randomBytes(16, (err, buf) => {
                 if (err) {
                     return reject(err);
