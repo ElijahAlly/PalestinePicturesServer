@@ -14,6 +14,7 @@ const cors = require('cors');
 const fileRouter = require('./routes/file');
 const adminRouter = require('./routes/admin');
 const codeRouter = require('./routes/code');
+const reviewRouter = require('./routes/review');
 
 const app = express();
 
@@ -30,19 +31,20 @@ app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const mongoose = require('mongoose');
-const reviewRouter = require('./routes/review');
 mongoose.Promise = require('bluebird');
 
 const url = config.mongoURI;
 const uploadDb = config.uploadDb;
 
+const [baseUri, queryParams] = url.split('/?');
+
 // Individual database URIs
 const dbURIs = {
-    admin: `${url}/admin`,
-    palestine_files: `${url}/palestine_files`,
-    test: `${url}/test`,
+    admin: `${baseUri}/admin?${queryParams}`,
+    palestine_files: `${baseUri}/palestine_files?${queryParams}`,
+    test: `${baseUri}/test?${queryParams}`,
 };
-
+console.log(dbURIs.admin)
 // Create connections
 const connections = {};
 
@@ -75,7 +77,6 @@ const connectToDatabase = async (dbName) => {
     }
 };
 
-// Connect to each database
 connectToDatabase('admin');
 connectToDatabase('palestine_files');
 connectToDatabase('test');

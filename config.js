@@ -1,5 +1,5 @@
 module.exports = {
-    mongoURI: process.env.MONGO_URI || 'mongodb+srv://elijahally:jEnFeNkaACqAgQcm@cluster0.hiuzzbf.mongodb.net',
+    mongoURI: process.env.MONGO_URI,
     mongoURIWithDB: (dbString) => {
         const [baseUri, queryParams] =  process.env.MONGO_URI.split('/?');
         return `${baseUri}/${dbString}?${queryParams}`;
