@@ -7,12 +7,7 @@
   "scripts": {
     "start": "NODE_ENV=production node bin/www",
     "dev": "NODE_ENV=development nodemon bin/www",
-    "build": "echo 'No build step required'",
-    "test": "jest --forceExit --detectOpenHandles",
-    "lint": "eslint --ignore-path .gitignore --ext .ts src/",
-    "lint:fix": "npm run lint -- --fix",
-    "deploy:prod": "npm run build && pm2 start ecosystem.config.js --only prod",
-    "deploy:dev": "pm2 start ecosystem.config.js --only dev"
+    "build": "echo 'No build step required'"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

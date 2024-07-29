@@ -1,7 +1,7 @@
 module.exports = {
     mongoURI: process.env.MONGO_URI || 'mongodb+srv://elijahally:jEnFeNkaACqAgQcm@cluster0.hiuzzbf.mongodb.net',
     mongoURIWithDB: (dbString) => process.env.MONGO_URI ? (
-        process.env.MONGO_URI.split('/?')[0] + dbString + process.env.MONGO_URI.split('/?')[1]
+        process.env.MONGO_URI.split('/?')[0] + dbString + '/?' + process.env.MONGO_URI.split('/?')[1]
     ) : (
             `mongodb+srv://elijahally:jEnFeNkaACqAgQcm@cluster0.hiuzzbf.mongodb.net/${dbString}`
     ),
