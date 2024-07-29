@@ -44,7 +44,7 @@ const dbURIs = {
     palestine_files: `${baseUri}/palestine_files?${queryParams}`,
     test: `${baseUri}/test?${queryParams}`,
 };
-console.log(dbURIs.admin)
+
 // Create connections
 const connections = {};
 
