@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const config = require('../config');
-const url = config.mongoURIWithDB('email');
+const url = config.mongoURIWithDB('users');
 const connect = mongoose.createConnection(url);
 
 const CodeSchema = new Schema({

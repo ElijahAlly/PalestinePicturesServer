@@ -6,6 +6,5 @@ module.exports = {
     },
     secretOrKey: process.env.SECRET_OR_KEY || 'and198!390QE8Wlkji',
     uploadDb: process.env.UPLOAD_DB || 'palestine_files',
-    userDb: process.env.USER_DB || 'user',
-    emailDb: process.env.EMAIL_DB || 'emails',
+    usersDb: process.env.USER_DB || 'users',
 };

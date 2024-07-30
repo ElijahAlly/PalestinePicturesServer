@@ -42,7 +42,7 @@ const [baseUri, queryParams] = url.split('/?');
 const dbURIs = {
     admin: `${baseUri}/admin?${queryParams}`,
     palestine_files: `${baseUri}/palestine_files?${queryParams}`,
-    test: `${baseUri}/test?${queryParams}`,
+    files: `${baseUri}/files?${queryParams}`,
 };
 
 // Create connections
@@ -79,7 +79,7 @@ const connectToDatabase = async (dbName) => {
 
 connectToDatabase('admin');
 connectToDatabase('palestine_files');
-connectToDatabase('test');
+connectToDatabase('files');
 
 /* 
     GridFs Configuration
