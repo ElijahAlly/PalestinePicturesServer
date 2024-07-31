@@ -2,12 +2,12 @@ const express = require('express');
 const reviewRouter = express.Router();
 const Review = require('../models/review');
 const Admin = require('../models/admin');
-const Image = require('../models/image');
+const File = require('../models/file');
 
 // GET: Fetches all the reviews for an image
-reviewRouter.route('/:imageId')
+reviewRouter.route('/:fileId')
     .get((req, res) => {
-        Review.find({ imageId: req.query.imageId })
+        Review.find({ fileId: req.query.fileId })
             .then((reviews) => {
                 if (!reviews || reviews.length === 0) {
                     return res.status(200).json({
@@ -37,18 +37,18 @@ reviewRouter.route('/')
             const {
                 review,
                 adminId,
-                imageId,
+                fileId,
                 statusGiven,
             } = JSON.parse(req.body.data);
 
             await Review.create({ 
                 review,
                 admin: adminId,
-                imageId,
+                fileId,
                 statusGiven 
             })
 
-            const reviewsRes = await Review.find({ imageId });
+            const reviewsRes = await Review.find({ fileId });
 
             // find the new status
             // console.log('reviews', JSON.stringify(reviewsRes));
@@ -94,7 +94,7 @@ reviewRouter.route('/')
             })
 
             console.log('statusEnumCount', statusEnumCount);
-            await Image.findOneAndUpdate({ _id: imageId }, {
+            await File.findOneAndUpdate({ _id: fileId }, {
                 status: statusEnumCount.maxStatus
             });
  
@@ -132,7 +132,7 @@ reviewRouter.route('/:id')
             const admin = await Admin.findOne({ _id: updatedReview.admin });
             updatedReview.admin = admin;
 
-            const reviewsRes = await Review.find({ imageId: updatedReview.imageId });
+            const reviewsRes = await Review.find({ fileId: updatedReview.fileId });
             const statusEnumCount = {
                 confirmed: 0,
                 rejected: 0,
@@ -175,7 +175,7 @@ reviewRouter.route('/:id')
             })
 
             console.log('statusEnumCount', statusEnumCount);
-            await Image.findByIdAndUpdate(updatedReview.imageId, {
+            await File.findByIdAndUpdate(updatedReview.fileId, {
                 status: statusEnumCount.maxStatus
             });
 

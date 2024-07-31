@@ -5,7 +5,7 @@ const config = require('../config');
 const url = config.mongoURIWithDB('files');
 const connect = mongoose.createConnection(url);
 
-const ImageSchema = new Schema({
+const FileSchema = new Schema({
     caption: {
         required: true,
         type: String
@@ -25,6 +25,20 @@ const ImageSchema = new Schema({
     isLandmark: {
         required: true,
         type: Boolean
+    },
+    fullName: {
+        required: false,
+        type: String,
+    },
+    age: {
+        required: false,
+        type: Number,
+        default: -1
+    },
+    age: {
+        required: false,
+        type: Number,
+        default: -1
     },
     birthedOn: {
         required: false,
@@ -143,5 +157,5 @@ const ImageSchema = new Schema({
     },
 });
 
-const Image = connect.model('Image', ImageSchema);
-module.exports = Image;
+const File = connect.model('File', FileSchema);
+module.exports = File;

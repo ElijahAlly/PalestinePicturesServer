@@ -1,7 +1,7 @@
 const express = require('express');
-const imageRouter = express.Router();
+const fileRouter = express.Router();
 const mongoose = require('mongoose');
-const Image = require('../models/image');
+const File = require('../models/file');
 const Review = require('../models/review');
 const config = require('../config');
 const Admin = require('../models/admin');
@@ -20,7 +20,7 @@ module.exports = (upload) => {
     });
 
     // GET: Fetches all the files in the uploads collection
-    imageRouter.route('/')
+    fileRouter.route('/')
         .get(async (req, res, next) => {
             try {
                 const { count, skip, isPerson, isLandmark, isConfirmed } = req.query;
@@ -39,7 +39,7 @@ module.exports = (upload) => {
 
                 // console.log('fileTypeQuery: ', fileTypeQuery);
 
-                const files = await Image.find({ ...fileTypeQuery, status: { $in: statusArr } })
+                const files = await File.find({ ...fileTypeQuery, status: { $in: statusArr } })
                     .limit(parseInt(count))
                     .skip(parseInt(skip));
 
@@ -58,7 +58,7 @@ module.exports = (upload) => {
                 await Promise.all(files.map(async (file) => {
                     try {
                         // ! Did NOT Work
-                        // Review.find({ imageId: file._id })
+                        // Review.find({ fileId: file._id })
                         // .populate('Admin')
                         // .exec()
                         // .then((reviews) => {
@@ -74,7 +74,7 @@ module.exports = (upload) => {
                         // ! Did NOT Work
                         // Review.aggregate([
                         //     {
-                        //         $match: { imageId: file._id },
+                        //         $match: { fileId: file._id },
                         //     },
                         //     {
                         //         $lookup: {
@@ -92,7 +92,7 @@ module.exports = (upload) => {
                         //             review: 1,
                         //             statusGiven: 1,
                         //             admin: '$adminData', // Replace admin reference with adminData
-                        //             imageId: 1,
+                        //             fileId: 1,
                         //             createdAt: 1,
                         //         },
                         //     },
@@ -104,7 +104,7 @@ module.exports = (upload) => {
                         //     });
                         // })
 
-                        const reviews = await Review.find({ imageId: file._id });
+                        const reviews = await Review.find({ fileId: file._id });
                         // console.log('reviews', reviews);
                         const reviewsWithAdmins = await Promise.all(reviews.map(async (review) => {
                             try {
@@ -138,11 +138,11 @@ module.exports = (upload) => {
     });
 
     // GET: Fetches a particular file by filename
-    imageRouter.route('/:filename')
+    fileRouter.route('/:filename')
         .get(async (req, res, next) => {
             // console.log('getting single file by filename -> ', req.params.filename);
             try {
-                const file = await Image.findOne({ filename: req.params.filename });
+                const file = await File.findOne({ filename: req.params.filename });
                 if (!file) {
                     return res.status(200).json({ // try tp find a way to send 404 with frontend moving on after error
                         success: false,
@@ -162,7 +162,7 @@ module.exports = (upload) => {
     });
 
     // GET: Fetches a particular image and render on browser
-    imageRouter.route('/image/:filename')
+    fileRouter.route('/image/:filename')
         .get((req, res, next) => {
             // console.log('getting single image by name -> ', req.params.filename);
             gfs.find({ filename: req.params.filename }).toArray((err, files) => {
@@ -192,10 +192,10 @@ module.exports = (upload) => {
     });
 
     // GET: Fetch most recently added record
-    imageRouter.route('/recent')
+    fileRouter.route('/recent')
         .get((req, res, next) => {
             // console.log('get most recently added image -> ', req.body)
-            Image.findOne({}, {}, { sort: { '_id': -1 } })
+            File.findOne({}, {}, { sort: { '_id': -1 } })
                 .then((image) => {
                     res.status(200).json({
                         success: true,
@@ -206,12 +206,12 @@ module.exports = (upload) => {
     });
 
     // POST: Upload a single image/file to Image collection
-    imageRouter.route('/')
+    fileRouter.route('/')
         .post(upload.single('file'), (req, res, next) => {
             // console.log('creating single file -> ', req.file);
 
             // check for existing images (Should We check based on filename as well?)
-            Image.findOne({ caption: req.body.caption })
+            File.findOne({ caption: req.body.caption })
                 .then((image) => {
 
                     // TODO: Add type field ['VIDEO', 'IMAGE', 'DOCUMENT']
@@ -249,17 +249,22 @@ module.exports = (upload) => {
 
                     const isPerson = JSON.parse(req.body.isPerson);
                     const isLandmark = JSON.parse(req.body.isLandmark);
+                    const fullName = JSON.parse(req.body.fullName);
+                    const age = JSON.parse(req.body.age);
                     const birthedOn = JSON.parse(req.body.birthedOn);
                     const passedOn = JSON.parse(req.body.passedOn);
                     const locationDetails = JSON.parse(req.body.locationDetails);
                     const sources = JSON.parse(req.body.sources);
+                    console.log('age', age);
 
-                    let newImage = new Image({
+                    let newFile = new File({
                         filename: req.file.filename,
                         fileId: req.file.id,
                         caption: req.body.caption,
                         isPerson,
                         isLandmark,
+                        fullName,
+                        age,
                         birthedOn,
                         passedOn,
                         locationDetails,
@@ -267,7 +272,7 @@ module.exports = (upload) => {
                     });
 
                     // console.log('image to create -> ', newImage);
-                    newImage.save()
+                    newFile.save()
                         .then((image) => { 
                             res.status(200).json({
                                 success: true,
@@ -280,7 +285,7 @@ module.exports = (upload) => {
     })
 
     // POST: Upload multiple files upto 3
-    imageRouter.route('/multiple')
+    fileRouter.route('/multiple')
         .post(upload.array('file', 3), (req, res, next) => {
             // console.log('uploading multiple files (max of 3) -> ', req.files)
             res.status(200).json({
@@ -290,14 +295,14 @@ module.exports = (upload) => {
     });
 
     // DELETE: Delete an image from the collection
-    imageRouter.route('/images/:id')
+    fileRouter.route('/images/:id')
         .delete((req, res, next) => {
             // console.log('deleting a single image -> ', req.params.id);
-            Image.findOne({ _id: req.params.id })
+            File.findOne({ _id: req.params.id })
                 .then((image) => {
                     if (image) {
                         // console.log('found file, deleting... -> ', image);
-                        Image.deleteOne({ _id: req.params.id })
+                        File.deleteOne({ _id: req.params.id })
                             .then(() => {
                                 return res.status(200).json({
                                     success: true,
@@ -316,7 +321,7 @@ module.exports = (upload) => {
     });
 
     // DELETE: Delete a particular file by an ID
-    imageRouter.route('/:id')
+    fileRouter.route('/:id')
         .delete((req, res, next) => {
             // console.log('deleting a single file by id -> ', req.params.id);
             gfs.delete(new mongoose.Types.ObjectId(req.params.id), (err, data) => {
@@ -332,7 +337,7 @@ module.exports = (upload) => {
     });
 
     // GET: Fetches file count for a particular page
-    imageRouter.route('/count/:page')
+    fileRouter.route('/count/:page')
         .get((req, res, next) => {
             let reqObj = {};
             switch (req.params.page) {
@@ -370,7 +375,7 @@ module.exports = (upload) => {
             }
 
 
-            Image.countDocuments(reqObj)
+            File.countDocuments(reqObj)
                 .then((count) => {
                     return res.status(200).json({
                         success: true,
@@ -381,5 +386,5 @@ module.exports = (upload) => {
                 .catch(err => { return res.status(500).json(err) });
         });
 
-    return imageRouter;
+    return fileRouter;
 };

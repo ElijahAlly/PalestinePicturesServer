@@ -202,12 +202,12 @@ adminRouter.route('/:email')
                         success: false,
                         message: 'Code Expired Last Year! Please check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org',
                     }) 
-                } else if (date.getFullYear() === parseInt(dateArr[2]) && (date.getMonth() + 1) > parseInt(dateArr[1])) { // code is from current year, but from a previous month
+                } else if (date.getFullYear() === parseInt(dateArr[2]) && (date.getMonth() + 1) > parseInt(dateArr[0])) { // code is from current year, but from a previous month
                     return res.status(300).json({
                         success: false,
                         message: 'Code Expired Last Month! Please check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org',
                     })
-                } else if (date.getFullYear() === parseInt(dateArr[2]) && (date.getMonth() + 1) === parseInt(dateArr[1]) && date.getDate() > parseInt(dateArr[0])) { // code is from current year and month, but from a previous day/week
+                } else if (date.getFullYear() === parseInt(dateArr[2]) && (date.getMonth() + 1) === parseInt(dateArr[0]) && date.getDate() > parseInt(dateArr[1])) { // code is from current year and month, but from a previous day/week
                     return res.status(300).json({
                         success: false,
                         message: `Code Expired Last ${codeData.frequency === 'WEEKLY' ? 'Week' : 'Month'}! Please check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org`,

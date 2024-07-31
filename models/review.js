@@ -22,7 +22,7 @@ const ReviewSchema = new Schema({
         ref: 'Admin',
         required: true
     },
-    imageId: {
+    fileId: {
         type: String, 
         required: true
     },
