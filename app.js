@@ -10,6 +10,8 @@ const multer = require('multer');
 const GridFsStorage = require('multer-gridfs-storage');
 const crypto = require('crypto');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
+const cron = require('node-cron');
 
 const fileRouter = require('./routes/file');
 const adminRouter = require('./routes/admin');
@@ -31,6 +33,8 @@ app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const mongoose = require('mongoose');
+const Admin = require('./models/admin');
+const Code = require('./models/code');
 mongoose.Promise = require('bluebird');
 
 const url = config.mongoURI;
@@ -56,6 +60,7 @@ const connectToDatabase = async (dbName) => {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             serverSelectionTimeoutMS: 5000,
+            useFindAndModify: false
         });
 
         // Store the connection in the connections object
@@ -128,6 +133,58 @@ app.use(function (err, req, res, next) {
     // render the error page
     res.status(err.status || 500);
     res.render('error');
+});
+
+const generateSecureCode = () => {
+  // Generate 16 random bytes and convert them to a hexadecimal string
+  return crypto.randomBytes(16).toString('hex').toUpperCase();
+};
+
+const sendEmail = async (adminEmails, newCode) => {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.SUPPORT_EMAIL || '',
+            pass: process.env.SUPPORT_EMAIL_PASSWORD || '',
+        },
+    });
+
+    const mailOptions = {
+        from: process.env.SUPPORT_EMAIL,
+        to: adminEmails.join(','),
+        subject: `1 New Weekly Admin Code for ${new Date().toDateString()}`,
+        text: `Your new admin code is: ${newCode}`,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        console.error('Error sending emails:', error);
+    }
+};
+
+// Cron job to run every Sunday at midnight
+cron.schedule('0 0 * * 0', async () => {
+    const newCode = generateSecureCode();
+
+    // Find all active admins
+    const admins = await Admin.find({ active: 'TRUE' });
+    const curDate = new Date();
+    const oneWeekFromCurDate = curDate;
+    oneWeekFromCurDate.setDate(oneWeekFromCurDate.getDate() + 7);
+
+    await Code.findOneAndUpdate({ active: true }, { active: false })
+
+    await Code.create({
+        code: newCode,
+        frequency: 'weekly',
+        active: true,
+    })
+
+    const adminEmails = admins.map(admin => admin.email);
+
+    // Send emails to active admins
+    await sendEmail(adminEmails, newCode);
 });
 
 module.exports = app;

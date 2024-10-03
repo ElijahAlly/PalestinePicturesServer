@@ -117,7 +117,6 @@ reviewRouter.route('/:id')
     .patch(async (req, res) => {
         try {
             const updateData = JSON.parse(req.body.data);
-            console.log('updateData', updateData);
 
             await Review.findByIdAndUpdate(req.params.id, updateData);
             const updatedReview = await Review.findById(req.params.id);
@@ -174,7 +173,6 @@ reviewRouter.route('/:id')
                 }
             })
 
-            console.log('statusEnumCount', statusEnumCount);
             await File.findByIdAndUpdate(updatedReview.fileId, {
                 status: statusEnumCount.maxStatus
             });
@@ -190,85 +188,5 @@ reviewRouter.route('/:id')
             res.status(500).json({ err, success: false, message: 'Error during update. Please try again later.' })
         }
     });
-
-// POST: Login a particular admin by email
-// reviewRouter.route('/:email')
-//     .post(async (req, res) => {
-//         try {
-//             const { password, code } = JSON.parse(req.body.data);
-//             const admin = await Admin.findOne({ email: req.params.email });
-
-//             if (!admin) {
-//                 return res.status(300).json({
-//                     success: false,
-//                     message: 'Admin not found, Please re-enter your email and try again',
-//                 });
-//             } 
-
-//             // Compare the req password with the stored hashed password
-//             console.log('admin', admin);
-//             const passwordMatch = await bcrypt.compare(password, admin.password);
-
-//             if (!passwordMatch) {
-//                 return res.status(300).json({
-//                     success: false,
-//                     message: 'Incorrect password. Please re-enter your password and try again.',
-//                 });
-//             }
-
-//             // confirm code is accurate and active
-//             const codeData = await Code.findOne({ code });
-
-//             if (!codeData || !codeData.id) {
-//                 return res.status(300).json({
-//                     success: false,
-//                     message: 'Code not found in our database. Please re-enter, or check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org',
-//                 })
-//             } else {
-//                 // Check if code is Expired
-//                 const dateArr = codeData.active_until.split('-'); // day-month-year
-//                 const date = new Date();
-
-//                 if (date.getFullYear() > parseInt(dateArr[2])) { // code from a previous year (cuurent year will never be less than a code from the db [NOT TRUE for Month/Day])
-//                     return res.status(300).json({
-//                         success: false,
-//                         message: 'Code Expired Last Year! Please check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org',
-//                     }) 
-//                 } else if (date.getFullYear() === parseInt(dateArr[2]) && (date.getMonth() + 1) > parseInt(dateArr[1])) { // code is from current year, but from a previous month
-//                     return res.status(300).json({
-//                         success: false,
-//                         message: 'Code Expired Last Month! Please check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org',
-//                     })
-//                 } else if (date.getFullYear() === parseInt(dateArr[2]) && (date.getMonth() + 1) === parseInt(dateArr[1]) && date.getDate() > parseInt(dateArr[0])) { // code is from current year and month, but from a previous day/week
-//                     return res.status(300).json({
-//                         success: false,
-//                         message: `Code Expired Last ${codeData.frequency === 'WEEKLY' ? 'Week' : 'Month'}! Please check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org`,
-//                     })
-//                 }
-//             }
-            
-//             if (codeData.code === code) {
-//                 return res.status(200).json({
-//                     success: true,
-//                     admin,
-//                 });
-//             }
-//         } catch (err) {
-//             console.error(err);
-//             res.status(500).json({ err, success: false, message: 'Error during login. Please try again later.' })
-//         }
-//     });
-
-// DELETE: Delete a particular admin by id
-// reviewRouter.route('/:id')
-//     .delete(async (req, res) => {
-//         try {
-//             await Admin.findByIdAndDelete(req.params.id,);
-//             return res.status(200).json({ success: true });
-//         } catch (err) {
-//             console.error(err);
-//             res.status(500).json({ err, success: false, message: 'Error during update. Please try again later.' })
-//         }
-//     });
 
 module.exports = reviewRouter;

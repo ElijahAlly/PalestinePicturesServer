@@ -17,12 +17,8 @@ const CodeSchema = new Schema({
         enum: ['daily', 'weekly', 'bi-weekly', 'monthly', 'yearly'],
         default: 'weekly'
     },
-    active_since: {
-        type: String,
-        default: ''
-    },
-    active_until: {
-        type: String,
+    active: {
+        type: Boolean,
         default: ''
     },
 });

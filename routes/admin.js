@@ -1,4 +1,5 @@
 const express = require('express');
+const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const adminRouter = express.Router();
 const Admin = require('../models/admin');
@@ -29,6 +30,55 @@ adminRouter.route('/')
                 }); 
             })
     });
+
+// Forgot Password
+adminRouter.route('/send-forgot-password-email')
+    .post(async (req, res) => {
+        try {
+            const { to, subject, text } = JSON.parse(req.body.data);
+            
+            if (!to) {
+                return res.status(501).send({ message: 'Must include email to send to.' });
+            } else if (!subject) {
+                return res.status(501).send({ message: 'Must include in subject for email.' });
+            } else if (!text) {
+                return res.status(501).send({ message: 'Must include text for email.' });
+            }
+
+            const adminRes = await Admin.find({ email: to });
+            let newText = '';
+
+            if (adminRes.length === 0) {
+                return res.status(501).send({ message: 'Admin not found with provided email: `' + to + '` Please include valid email you created your account with.' }); 
+            } else {
+                if (adminRes[0].active !== 'TRUE') {
+                    return res.status(401).send({ message: 'Admin not Active. Please contact support to reactivate your account: support@palestinepictures.org' });
+                }
+                newText = text + '_' + adminRes[0]._id
+            }
+
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.SUPPORT_EMAIL || '',
+                    pass: process.env.SUPPORT_EMAIL_PASSWORD || '',
+                },
+            });
+
+            const mailOptions = {
+                from: process.env.SUPPORT_EMAIL || '',
+                to,
+                subject,
+                text: newText,
+            };
+
+            await transporter.sendMail(mailOptions);
+
+            res.status(200).send({ message: 'Email sent successfully!' });
+        } catch (error) {
+            res.status(500).send({ message: 'Error sending email', error });
+        }
+    })
 
 // POST: creates an admin (Will NOT be active. Will need to be verified then activated)
 adminRouter.route('/')
@@ -126,24 +176,63 @@ adminRouter.route('/:id')
     .patch(async (req, res) => {
         try {
             const updateData = JSON.parse(req.body.data);
-            console.log('updateData', updateData);
 
-            await Admin.findByIdAndUpdate(req.params.id, updateData);
-            const updatedAdmin = await Admin.findById(req.params.id);
-            console.log('admin', updatedAdmin);
+            if (updateData.password) {
+                // Generate a salt (a random string) to use during hashing
+                const saltRounds = 12; // Adjust the number of rounds (higher is more secure but slower)
+                bcrypt.genSalt(saltRounds, (err, salt) => {
+                    if (err) {
+                        return res.status(300).json({
+                            success: false,
+                            message: 'Error encrypting password. Please try again later.',
+                        });
+                    } else {
+                        // Hash the password using the generated salt
+                        bcrypt.hash(updateData.password, salt, async (err, hash) => {
+                            if (err) {
+                                return res.status(300).json({
+                                    success: false,
+                                    message: 'Error encrypting password. Please try again later.',
+                                });
+                            } else {
+                                updateData.password = hash;
+                                await Admin.findByIdAndUpdate(req.params.id, updateData);
+                                const updatedAdmin = await Admin.findById(req.params.id);
 
-            if (!updatedAdmin) {
-                return res.status(300).json({
-                    success: false,
-                    message: 'Admin not updated, Please try again',
+                                if (!updatedAdmin) {
+                                    return res.status(300).json({
+                                        success: false,
+                                        message: 'Admin not updated, Please try again',
+                                    });
+                                } 
+
+                                if (updatedAdmin._id) {
+                                    return res.status(200).json({
+                                        success: true,
+                                        admin: updatedAdmin,
+                                    });
+                                }
+                            }
+                        });
+                    }
                 });
-            } 
-
-            if (updatedAdmin._id) {
-                return res.status(200).json({
-                    success: true,
-                    admin: updatedAdmin,
-                });
+            } else {
+                await Admin.findByIdAndUpdate(req.params.id, updateData);
+                const updatedAdmin = await Admin.findById(req.params.id);
+    
+                if (!updatedAdmin) {
+                    return res.status(300).json({
+                        success: false,
+                        message: 'Admin not updated, Please try again',
+                    });
+                } 
+    
+                if (updatedAdmin._id) {
+                    return res.status(200).json({
+                        success: true,
+                        admin: updatedAdmin,
+                    });
+                }
             }
         } catch (err) {
             console.error(err);
@@ -174,7 +263,6 @@ adminRouter.route('/:email')
             }
 
             // Compare the req password with the stored hashed password
-            console.log('admin', admin);
             const passwordMatch = await bcrypt.compare(password, admin.password);
 
             if (!passwordMatch) {
@@ -192,27 +280,11 @@ adminRouter.route('/:email')
                     success: false,
                     message: 'Code not found in our database. Please re-enter, or check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org',
                 })
-            } else {
-                // Check if code is Expired
-                const dateArr = codeData.active_until.split('-'); // day-month-year
-                const date = new Date();
-
-                if (date.getFullYear() > parseInt(dateArr[2])) { // code from a previous year (cuurent year will never be less than a code from the db [NOT TRUE for Month/Day])
-                    return res.status(300).json({
-                        success: false,
-                        message: 'Code Expired Last Year! Please check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org',
-                    }) 
-                } else if (date.getFullYear() === parseInt(dateArr[2]) && (date.getMonth() + 1) > parseInt(dateArr[0])) { // code is from current year, but from a previous month
-                    return res.status(300).json({
-                        success: false,
-                        message: 'Code Expired Last Month! Please check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org',
-                    })
-                } else if (date.getFullYear() === parseInt(dateArr[2]) && (date.getMonth() + 1) === parseInt(dateArr[0]) && date.getDate() > parseInt(dateArr[1])) { // code is from current year and month, but from a previous day/week
-                    return res.status(300).json({
-                        success: false,
-                        message: `Code Expired Last ${codeData.frequency === 'WEEKLY' ? 'Week' : 'Month'}! Please check your email for a new code. We send a new one every Monday to our active admins. To check if you are active, contact us at support@palestinepictures.org`,
-                    })
-                }
+            } else if (!codeData.active) {
+                return res.status(300).json({
+                    success: false,
+                    message: 'Code Expired! Please check your email for a new code. We send a new one every Sunday at midnight to our active admins. To check if you are active, contact us at support@palestinepictures.org',
+                }) 
             }
             
             if (codeData.code === code) {
